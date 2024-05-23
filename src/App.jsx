@@ -80,7 +80,8 @@ export default function App() {
           {isLoading ? <Loader/> : <MovieList movies={movies} />}
         </Box>
         <Box>
-          <>
+          <>fatal: repository 'https://github.com/LeezaShakya/usePopCorn.git/' not found
+
             <Summary watched={watched} />
             <WatchedMovieList watched={watched} />
           </>
