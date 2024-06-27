@@ -52,36 +52,67 @@ const average = (arr) =>
 
 const key = "855cc364";
 export default function App() {
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
-  const [isLoading , setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const tempQuery ="Guardian";
+
+  // useEffect(function(){
+  //   console.log('A: having no dependency array, excuted on every render')
+  // })
+  // useEffect(function(){
+  //   console.log("B: Exceuted on first render")
+  // },[])
+
+  // console.log('C:excuted first');
+
   useEffect(function () {
-    async function FetchMovies(){
-      setIsLoading(true);
-      const res = await fetch(`http://www.omdbapi.com/?i=tt3896198&apikey=${key}&s=Guardians of the Galaxy`);
-      const data = await res.json();
-      setMovies(data.Search);
-      console.log(data.Search)
-      setIsLoading(false);
+    async function FetchMovies() {
+      // handling error in react
+      try {
+        setIsLoading(true);
+        const res = await fetch(`http://www.omdbapi.com/?i=tt3896198&apikey=${key}&s=${query}`);
+        //if there is error in network while fetching data
+        if (!res.ok) 
+          throw new Error("Something went wrong in fetching data")
+        
+        const data = await res.json();
+        //if the movie is not found and is written after the data because we get the data with response properties false
+        if(data.Response === 'False') throw new Error("Movie not Found")
+        setMovies(data.Search);
+        console.log(data.Search)
+      } catch (err) {
+        console.log(err.message)
+        setError(err.message)
+      }
+      //this code no matter what 
+      finally {
+        setIsLoading(false);
+      }
     }
     FetchMovies();
-  },[])
+  }, [query])
   return (
     <>
       {/* component composition to remove the prop drilling*/}
       <Navbar>
         <Logo />
-        <Search />
+        <Search query={query} setQuery={setQuery}/>
         <NumResults movies={movies} />
       </Navbar>
 
       <Main>
         <Box>
-          {isLoading ? <Loader/> : <MovieList movies={movies} />}
+          {/* {isLoading ? <Loader /> : <MovieList movies={movies} />} */}
+          {/* three conditions */}
+          {error && <ErrorMessage message={error} />}
+          {!isLoading && !error && <MovieList movies={movies} />}
+          {isLoading && <Loader />}
         </Box>
         <Box>
-          <>fatal: repository 'https://github.com/LeezaShakya/usePopCorn.git/' not found
-
+          <>
             <Summary watched={watched} />
             <WatchedMovieList watched={watched} />
           </>
@@ -91,11 +122,19 @@ export default function App() {
   );
 }
 
- function Loader(){
-  return(
+function Loader() {
+  return (
     <div className="loader">Loading..</div>
   )
- }
+}
+
+function ErrorMessage({ message }) {
+  return (
+    <p className="error">
+      {message}
+    </p>
+  )
+}
 function Navbar({ children }) {
   return <nav className="nav-bar">{children}</nav>;
 }
@@ -109,8 +148,7 @@ function Logo() {
   );
 }
 
-function Search() {
-  const [query, setQuery] = useState("");
+function Search({query, setQuery}) {
   return (
     <input
       className="search"
